@@ -2,6 +2,7 @@ import argparse
 import os
 import shutil
 
+from exceptions import InvalidFileName
 import pdf_driver
 import webdriver
 
@@ -17,6 +18,9 @@ def main():
 		parser.add_argument('-n', '--name', type=str, help='Enter name of final pdf file', required=True)
 		url = parser.parse_args().url
 		pdf_file_name = parser.parse_args().name
+		if len(pdf_file_name.split(".")) > 0:
+			if pdf_file_name.split(".")[1] != 'pdf':
+				raise InvalidFileName()
 
 	else:
 		url = "[test_url]"
