@@ -6,7 +6,7 @@ Tool to convert your google slideshow to a PDF. Typically, when you download you
 
 ### Setting up dependencies
 
-### Using the given environment
+**Using the given environment**
 
 For this project is maintained with the poetry package manager. Before you being, make sure that you have pipx and Poetry installed:
 
@@ -23,7 +23,7 @@ Once you have activated your environment, install the necessary requirements:
 
 Once you have done all these steps, you are done setting up your environment
 
-### Using your own environment
+**Using your own environment**
 
 If you don't want to use the poetry environment, you can install the dependencies yourself. This project only has two dependencies:
 
