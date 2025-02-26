@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "slidestopdf"
-version = "1.0.0"
+version = "1.0.1"
 description = "Turn your google slides presentation into a pdf!"
 authors = ["TanglyEagle7718"]
 
