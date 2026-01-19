@@ -1,56 +1,77 @@
 import os
-import re
+import time
 
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 
-from exceptions import InvalidURL
-
 FOLDER_NAME = 'tmp_data'
 
-def validate_url(url: str) -> str:
-	regex = r'(https:\/\/)?docs\.google\.com\/presentation\/d\/.*\/(edit|present).*'
-	if re.match(regex, url):
-		new_url = re.sub(r'(?<=)(edit)', 'present', url)
-		return new_url 
-	else:
-		#parkChrome()
-		raise InvalidURL()
+def launch_chrome():
+    driver = webdriver.Chrome()
+    driver.maximize_window()
+    driver.get("about:blank")
+    return driver
+
+
+def advance_and_capture(driver, screenshot_path):
+    actions = ActionChains(driver)
+
+    time.sleep(0.4)
+    actions.send_keys(Keys.ARROW_RIGHT).perform()
+
+    time.sleep(0.4)
+    actions.send_keys(Keys.ARROW_RIGHT).perform()
+
+    time.sleep(0.4)
+    actions.send_keys(Keys.ARROW_LEFT).perform()
+
+    time.sleep(0.6)
+    driver.save_screenshot(screenshot_path)
+
 
 def take_screenshots(driver):
-	# creates a tmp_data folder
-	relativedir = os.path.join(os.getcwd(), FOLDER_NAME)
-	os.mkdir(relativedir)
-	
-	# create first image
-	prev_image = '1.png' 
-	screenshot_path = os.path.join(relativedir, prev_image)
-	driver.save_screenshot(str(screenshot_path))
-	ActionChains(driver).key_down(Keys.ARROW_RIGHT).key_up(Keys.ARROW_RIGHT).perform()
+    relativedir = os.path.join(os.getcwd(), FOLDER_NAME)
+    os.mkdir(relativedir)
 
-	curr_image = "2.png"
-	screenshot_path = os.path.join(relativedir, curr_image)
-	driver.save_screenshot(str(screenshot_path))
-	ActionChains(driver).key_down(Keys.ARROW_RIGHT).key_up(Keys.ARROW_RIGHT).perform()
+    def read_bytes(path):
+        with open(path, "rb") as f:
+            return f.read()
 
-	i = 3
-	prev_image_path = os.path.join(relativedir, prev_image)
-	curr_image_path = os.path.join(relativedir, curr_image)
-	while open(prev_image_path, 'rb').read() != open(curr_image_path, 'rb').read():
-		prev_image = curr_image
-		prev_image_path = os.path.join(relativedir, prev_image)
-		curr_image = f"{i}.png"
-		curr_image_path = os.path.join(relativedir, curr_image)
-		driver.save_screenshot(str(curr_image_path))
-		ActionChains(driver).key_down(Keys.ARROW_RIGHT).key_up(Keys.ARROW_RIGHT).perform()
-		i+=1
-	return prev_image
+    prev_image = "1.png"
+    prev_path = os.path.join(relativedir, prev_image)
+    advance_and_capture(driver, prev_path)
 
-def driveChrome(url: str) -> str:
-	url = validate_url(url)
-	driver = webdriver.Chrome()
-	driver.maximize_window()
-	driver.get(url)
-	return take_screenshots(driver)
+    duplicate_count = 0
+    last_valid_index = 1
+
+    i = 2
+    while True:
+        curr_image = f"{i}.png"
+        curr_path = os.path.join(relativedir, curr_image)
+
+        advance_and_capture(driver, curr_path)
+
+        if read_bytes(curr_path) == read_bytes(prev_path):
+            duplicate_count += 1
+
+            if duplicate_count >= 5:
+                for j in range(i - duplicate_count + 1, i + 1):
+                    dup_path = os.path.join(relativedir, f"{j}.png")
+                    if os.path.exists(dup_path):
+                        os.remove(dup_path)
+
+                return f"{last_valid_index}.png"
+        else:
+            duplicate_count = 0
+            last_valid_index = i
+            prev_image = curr_image
+            prev_path = curr_path
+
+        i += 1
+
+def switch_to_active_window(driver):
+    handles = driver.window_handles
+    if not handles:
+        raise RuntimeError("No browser windows found.")
+    driver.switch_to.window(handles[-1])
